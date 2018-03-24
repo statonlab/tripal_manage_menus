@@ -140,6 +140,20 @@ function get_entities($bundle_id) {
         WHERE te.term_id IN (:bundle_id)',
     [':bundle_id' => $bundle_id])->fetchAll();
 
+  // Simple alphabetical insertion sort algorithm
+  $entities_size = count($entities);
+  // First iteration loops through all entities
+  for ($i = 1; $i < $entities_size; ++$i) {
+    // Second iteration swaps entities
+    for ($j = $i; $j > 0; --$j) {
+      if (strcasecmp($entities[$j]->title, $entities[$j - 1]->title) < 0) {
+        $temp = $entities[$j - 1];
+        $entities[$j - 1] = $entities[$j];
+        $entities[$j] = $temp;
+      }
+    }
+  }
+
   return $entities;
 }
 
