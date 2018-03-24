@@ -1,0 +1,86 @@
+<?php
+
+/**
+ *  Implementation of hook_install();
+ */
+function tripal_manage_menus_install()
+{
+  create_organism_menu();
+}
+
+function create_organism_menu() {
+  // create our new menu under the main menu
+  $trees = [
+    'link_title' => 'Trees',
+    'link_path' => 'chado/organism',
+    'menu_name' => 'main-menu',
+    'weight' => 0,
+    'expanded' => 0,
+    'customized' => 1,
+  ];
+
+  $exists = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :main_menu
+        AND   ml.link_title = :link_title',
+    [':main_menu' => $trees['menu_name'], ':link_title' => $trees['link_title']])->fetchAll();
+
+  if (!$exists) {
+    $mlid = menu_link_save($trees);
+  } else {
+    $mlid = $exists;
+  }
+
+  // Get the bundle_ids that use organism as a data table
+  $bundle_id = db_query('
+        SELECT cb.bundle_id 
+        FROM {chado_bundle} cb 
+        WHERE cb.data_table = :organism',
+    [':organism' => 'organism'])->fetchAll();
+
+  // Search for all records that use organism as a data table
+  $organisms = db_query('
+        SELECT te.id, te.title
+        FROM {tripal_entity} te
+        WHERE IN te.term_id = :bundle_id',
+    [':bundle_id' => $bundle_id])->fetchAll();
+
+  // At this point we now have the ids of all the organisms on the site
+
+  // Remove any existing links under our old menus
+  $old_links = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :main_menu
+        AND   ml.plid = :mlid',
+    [':main_menu' => $trees['menu_name'], ':mlid' => $mlid])->fetchAll();
+
+  foreach($old_links as $link)
+  {
+    db_query('DELETE FROM {menu_links} ml WHERE ml.mlid = :mlid',
+    [':mlid' => $link->mlid]);
+  }
+
+  // Now we can add the new links
+
+  $i = 0;
+
+  foreach ($organisms as $organism) {
+    $link = [
+      'link_title' => $organism->title,
+      // Something along the lines of '/bio_data/10'
+      'link_path' => 'bio_data/' . $organism->id,
+      'menu_name' => 'main-menu',
+      // Minimum weight incremented by the number of elements
+      'weight' => -50 + $i,
+      'expanded' => 0,
+      'plid' => $mlid,
+      'customized' => 1,
+    ];
+
+    menu_link_save($link);
+
+    $i++;
+  }
+}

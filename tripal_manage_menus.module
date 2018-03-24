@@ -1,0 +1,179 @@
+<?php
+
+/**
+ * Implements hook_entity_delete().
+ */
+function tripal_manage_menus_entity_delete($entity, $type) {
+  if (in_array($entity->term_id, get_entity_bundle('organism')))
+    rebuild_menu_links('main-menu', 'Trees', 'organism');
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function tripal_manage_menus_entity_insert($entity, $type) {
+  if (in_array($entity->term_id, get_entity_bundle('organism')))
+    rebuild_menu_links('main-menu', 'Trees', 'organism');
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function tripal_manage_menus_entity_update($entity, $type) {
+  if (in_array($entity->term_id, get_entity_bundle('organism'))) {
+    rebuild_menu_links('main-menu', 'Trees', 'organism');
+  }
+}
+
+/**
+ * Removes all existing menu links for a given parent menu link and rebuilds the links from scratch.
+ *
+ * @param $menu_name
+ *  A string for the name of the menu containing the link to rebuild.
+ *
+ * @param $link_title
+ *  A string for the name of the link to rebuild.
+ *
+ * @param $bundle_name
+ *  A string of the name of the bundle containing the entities for which the links will be created.
+ *
+ */
+function rebuild_menu_links($menu_name, $link_title, $bundle_name)
+{
+  $mlid = get_menu($menu_name, $link_title);
+  $bundle_id = get_entity_bundle($bundle_name);
+  $entities = get_entities($bundle_id);
+
+  remove_menu_links($menu_name, $mlid);
+  update_menu_links($entities, $menu_name, $mlid);
+}
+
+/**
+ * Return the menu link ID of a menu link.
+ *
+ * @param $menu_name
+ *  The name of the menu with which the link is associated.
+ *
+ * @param $link_title
+ *  The name of the link from which to retrieve the ID.
+ *
+ * @return $mlid
+ *  A string containing the menu link id for the given menu link.
+ *
+ */
+function get_menu($menu_name, $link_title) {
+  $mlid = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.link_title = :link_title',
+    [':menu_name' => $menu_name, ':link_title' => $link_title])->fetchField();
+
+  if ($mlid) return $mlid;
+
+  return 0;
+}
+
+/**
+ * Deletes all the menu links under a given parent menu link.
+ *
+ * @param $menu_name
+ *  The name of the menu with which the link is associated.
+ *
+ * @param $mlid
+ *  The menu link ID of the parent link. This is retrieved via get_menu().
+ *
+ */
+function remove_menu_links($menu_name, $mlid) {
+  $old_links = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.plid = :mlid',
+    [':menu_name' => $menu_name, ':mlid' => $mlid])->fetchAll();
+
+  foreach($old_links as $link) {
+    db_query('DELETE FROM {menu_links} ml WHERE ml.mlid = :mlid',
+      [':mlid' => $link->mlid]);
+  }
+}
+
+/**
+ * Returns the ID of a given bundle.
+ *
+ * @param $bundle_name
+ *  The name of the bundle for which to retrieve the ID.
+ *
+ * @return $bundle_ids
+ *  An array of strings containing the IDs of a bundle.
+ *
+ */
+function get_entity_bundle($bundle_name) {
+  $bundle_id = db_query('
+        SELECT cb.bundle_id 
+        FROM {chado_bundle} cb 
+        WHERE cb.data_table = :bundle',
+    [':bundle' => $bundle_name])->fetchAll();
+
+  $bundle_ids = [];
+
+  foreach($bundle_id as $object)
+    $bundle_ids[] = $object->bundle_id;
+
+  return $bundle_ids;
+}
+
+/**
+ * Gets all records for a bundle.
+ *
+ * @param $bundle_id
+ *  An array containing the IDs of all bundles for an entity.
+ *
+ * @return $entities
+ *  An associative array of objects containing the names and IDs of the records under a given bundle.
+ *
+ */
+function get_entities($bundle_id) {
+  $entities = db_query('
+        SELECT te.id, te.title
+        FROM {tripal_entity} te
+        WHERE te.term_id IN (:bundle_id)',
+    [':bundle_id' => $bundle_id])->fetchAll();
+
+  return $entities;
+}
+
+/**
+ * Creates menu links for a given array of entities under a given menu.
+ *
+ * @param $entities
+ *  An associative array of objects containing the names and IDs for records.
+ *
+ * @param $menu_name
+ *  The name of the menu for which to add the links.
+ *
+ * @param $mlid
+ *  The menu link ID of the parent.
+ *
+ */
+function update_menu_links($entities, $menu_name, $mlid) {
+  $i = 0;
+
+  foreach ($entities as $entity) {
+    $link = [
+      'link_title' => $entity->title,
+      // Something along the lines of '/bio_data/10'
+      'link_path' => 'bio_data/' . $entity->id,
+      'menu_name' => $menu_name,
+      // Minimum weight incremented by the number of elements
+      'weight' => -50 + $i,
+      'expanded' => 0,
+      'plid' => $mlid,
+      'customized' => 1,
+    ];
+
+    menu_link_save($link);
+
+    $i++;
+  }
+}
