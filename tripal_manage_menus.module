@@ -1,5 +1,7 @@
 <?php
 
+require 'tripal_manage_menus.install';
+
 /**
  * Implements hook_entity_delete().
  */
