@@ -11,7 +11,7 @@ function tripal_manage_menus_install()
    *
    * Links to chado/organism by default.
    */
-  create_menu_link('Trees', 'chado/organism', 'main-menu', 'organism');
+  create_menu_link('Trees', 'organisms', 'main-menu', 'organism');
 }
 
 /**
