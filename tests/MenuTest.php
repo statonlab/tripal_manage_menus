@@ -9,7 +9,7 @@ class MenuTest extends TripalTestCase {
   /**
    * Checks to see if the menu is built properly upon installation.
    *
-   * @dataProvider entityLinkDataProvider
+   * @dataProvider tripal_manage_menus_entityLinkDataProvider
    */
   public function testMenuInstalled($organism_title, $menu_link_title) {
     $this->assertEquals($organism_title, $menu_link_title);
@@ -18,7 +18,7 @@ class MenuTest extends TripalTestCase {
   /**
    * Checks to see if the menu is rebuilt properly after inserting an entity.
    *
-   * @dataProvider entityLinkDataProvider
+   * @dataProvider tripal_manage_menus_entityLinkDataProvider
    */
   public function testMenuInsert($organism_title, $menu_link_title) {
     // Check to see if they're equal
@@ -28,7 +28,7 @@ class MenuTest extends TripalTestCase {
   /**
    * Checks to see if the menu is rebuilt properly after updating an entity.
    *
-   * @dataProvider entityLinkDataProvider
+   * @dataProvider tripal_manage_menus_entityLinkDataProvider
    */
   public function testMenuUpdate() {
 
@@ -53,7 +53,7 @@ class MenuTest extends TripalTestCase {
    *  the first string being the name of an entity and the second string being
    *  the name of its matching link title
    */
-  public function entityLinkDataProvider() {
+  public function tripal_manage_menus_entityLinkDataProvider() {
     $bundle_ids = db_query('
         SELECT cb.bundle_id 
         FROM {chado_bundle} cb 

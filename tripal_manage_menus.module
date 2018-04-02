@@ -40,7 +40,7 @@ function tripal_manage_menus_entity_update($entity, $type) {
  *  A string of the name of the bundle containing the entities for which the links will be created.
  *
  */
-function rebuild_menu_links($menu_name, $link_title, $bundle_name)
+function tripal_manage_menus_rebuild_menu_links($menu_name, $link_title, $bundle_name)
 {
   $mlid = get_menu_link($menu_name, $link_title);
   $bundle_id = get_entity_bundle($bundle_name);

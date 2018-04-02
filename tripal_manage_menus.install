@@ -38,7 +38,7 @@ function tripal_manage_menus_uninstall()
  *  A string for the bundle for which the menu will be created (e.g. organism)
  *
  */
-function create_menu_link($link_title, $link_path, $menu_name, $bundle_name) {
+function tripal_manage_menus_create_menu_link($link_title, $link_path, $menu_name, $bundle_name) {
 
   $existing_menu = db_query('
         SELECT ml.mlid
@@ -78,7 +78,7 @@ function create_menu_link($link_title, $link_path, $menu_name, $bundle_name) {
  *  A string for the name of the menu link
  *
  */
-function destroy_menu_link($menu_name, $link_title)
+function tripal_manage_menus_destroy_menu_link($menu_name, $link_title)
 {
   $mlid = get_menu_link($menu_name, $link_title);
 
@@ -96,7 +96,7 @@ function destroy_menu_link($menu_name, $link_title)
  *  An array of strings containing the IDs of a bundle.
  *
  */
-function get_entity_bundle($bundle_name) {
+function tripal_manage_menus_get_entity_bundle($bundle_name) {
   $bundle_id = db_query('
         SELECT cb.bundle_id 
         FROM {chado_bundle} cb 
@@ -121,7 +121,7 @@ function get_entity_bundle($bundle_name) {
  *  An associative array of objects containing the names and IDs of the records under a given bundle.
  *
  */
-function get_entities($bundle_id) {
+function tripal_manage_menus_get_entities($bundle_id) {
   $entities = db_query('
         SELECT te.id, te.title
         FROM {tripal_entity} te
@@ -145,7 +145,7 @@ function get_entities($bundle_id) {
  *  A string containing the menu link id for the given menu link.
  *
  */
-function get_menu_link($menu_name, $link_title) {
+function tripal_manage_menus_get_menu_link($menu_name, $link_title) {
   $mlid = db_query('
         SELECT ml.mlid
         FROM {menu_links} ml
@@ -168,7 +168,7 @@ function get_menu_link($menu_name, $link_title) {
  *  The menu link ID of the parent link. This is retrieved via get_menu().
  *
  */
-function remove_menu_links($menu_name, $mlid) {
+function tripal_manage_menus_remove_menu_links($menu_name, $mlid) {
   $old_links = db_query('
         SELECT ml.mlid
         FROM {menu_links} ml
@@ -195,7 +195,7 @@ function remove_menu_links($menu_name, $mlid) {
  *  The menu link ID of the parent.
  *
  */
-function update_menu_links($entities, $menu_name, $mlid) {
+function tripal_manage_menus_update_menu_links($entities, $menu_name, $mlid) {
   $i = 0;
 
   foreach ($entities as $entity) {
