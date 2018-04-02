@@ -6,24 +6,24 @@ require_once 'tripal_manage_menus.install';
  * Implements hook_entity_delete().
  */
 function tripal_manage_menus_entity_delete($entity, $type) {
-  if (in_array($entity->term_id, get_entity_bundle('organism')))
-    rebuild_menu_links('main-menu', 'Trees', 'organism');
+  if (in_array($entity->term_id, tripal_manage_menus_get_entity_bundle('organism')))
+    tripal_manage_menus_rebuild_menu_links('main-menu', 'Trees', 'organism');
 }
 
 /**
  * Implements hook_entity_insert().
  */
 function tripal_manage_menus_entity_insert($entity, $type) {
-  if (in_array($entity->term_id, get_entity_bundle('organism')))
-    rebuild_menu_links('main-menu', 'Trees', 'organism');
+  if (in_array($entity->term_id, tripal_manage_menus_get_entity_bundle('organism')))
+    tripal_manage_menus_rebuild_menu_links('main-menu', 'Trees', 'organism');
 }
 
 /**
  * Implements hook_entity_update().
  */
 function tripal_manage_menus_entity_update($entity, $type) {
-  if (in_array($entity->term_id, get_entity_bundle('organism'))) {
-    rebuild_menu_links('main-menu', 'Trees', 'organism');
+  if (in_array($entity->term_id, tripal_manage_menus_get_entity_bundle('organism'))) {
+    tripal_manage_menus_rebuild_menu_links('main-menu', 'Trees', 'organism');
   }
 }
 
@@ -42,10 +42,10 @@ function tripal_manage_menus_entity_update($entity, $type) {
  */
 function tripal_manage_menus_rebuild_menu_links($menu_name, $link_title, $bundle_name)
 {
-  $mlid = get_menu_link($menu_name, $link_title);
-  $bundle_id = get_entity_bundle($bundle_name);
-  $entities = get_entities($bundle_id);
+  $mlid = tripal_manage_menus_get_menu_link($menu_name, $link_title);
+  $bundle_id = tripal_manage_menus_get_entity_bundle($bundle_name);
+  $entities = tripal_manage_menus_get_entities($bundle_id);
 
-  remove_menu_links($menu_name, $mlid);
-  update_menu_links($entities, $menu_name, $mlid);
+  tripal_manage_menus_remove_menu_links($menu_name, $mlid);
+  tripal_manage_menus_update_menu_links($entities, $menu_name, $mlid);
 }

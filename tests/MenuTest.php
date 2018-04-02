@@ -21,7 +21,7 @@ class MenuTest extends TripalTestCase {
    * @dataProvider tripal_manage_menus_entityLinkDataProvider
    */
   public function testMenuInsert($organism_title, $menu_link_title) {
-    // Check to see if they're equal
+
     $this->assertEquals($organism_title, $menu_link_title);
   }
 

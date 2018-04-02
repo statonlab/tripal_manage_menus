@@ -11,7 +11,7 @@ function tripal_manage_menus_install()
    *
    * Links to chado/organism by default.
    */
-  create_menu_link('Trees', 'organisms', 'main-menu', 'organism');
+  tripal_manage_menus_create_menu_link('Trees', 'organisms', 'main-menu', 'organism');
 }
 
 /**
@@ -19,7 +19,7 @@ function tripal_manage_menus_install()
  */
 function tripal_manage_menus_uninstall()
 {
-  destroy_menu_link('main-menu', 'Trees');
+  tripal_manage_menus_destroy_menu_link('main-menu', 'Trees');
 }
 
 /**
@@ -60,12 +60,12 @@ function tripal_manage_menus_create_menu_link($link_title, $link_path, $menu_nam
     $mlid = menu_link_save($menu);
   } else {
     $mlid = $existing_menu;
-    remove_menu_links($menu_name, $mlid);
+    tripal_manage_menus_remove_menu_links($menu_name, $mlid);
   }
 
-  $bundle_id = get_entity_bundle($bundle_name);
-  $entities = get_entities($bundle_id);
-  update_menu_links($entities, $menu_name, $mlid);
+  $bundle_id = tripal_manage_menus_get_entity_bundle($bundle_name);
+  $entities = tripal_manage_menus_get_entities($bundle_id);
+  tripal_manage_menus_update_menu_links($entities, $menu_name, $mlid);
 }
 
 /**
@@ -80,9 +80,9 @@ function tripal_manage_menus_create_menu_link($link_title, $link_path, $menu_nam
  */
 function tripal_manage_menus_destroy_menu_link($menu_name, $link_title)
 {
-  $mlid = get_menu_link($menu_name, $link_title);
+  $mlid = tripal_manage_menus_get_menu_link($menu_name, $link_title);
 
-  remove_menu_links($menu_name, $mlid);
+  tripal_manage_menus_remove_menu_links($menu_name, $mlid);
   menu_link_delete($mlid);
 }
 
