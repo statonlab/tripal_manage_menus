@@ -1,0 +1,6 @@
+{
+  "minimum-stability": "dev",
+  "require-dev": {
+      "statonlab/tripal-test-suite": "dev-master"
+   }
+}
