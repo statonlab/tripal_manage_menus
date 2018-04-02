@@ -1,3 +1,3 @@
 name = Tripal Manage Menus
-description = A simple menu module that automatically sorts organisms.
+description = A simple menu module that dynamically generates menu links to all existing organisms on a site.
 core = 7.x
