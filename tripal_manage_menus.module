@@ -28,14 +28,6 @@ function tripal_manage_menus_entity_update($entity, $type) {
 }
 
 /**
- * Implements hook_form_alter().
- */
-function tripal_manage_menus_form_alter($form, $form_state, $form_id) {
-  dsm($form);
-  dsm($form_id);
-}
-
-/**
  * Removes all existing menu links for a given parent menu link and rebuilds the links from scratch.
  *
  * @param $menu_name
