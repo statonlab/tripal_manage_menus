@@ -3,44 +3,293 @@
 namespace Tests;
 
 use StatonLab\TripalTestSuite\TripalTestCase;
-use Tests\DatabaseSeeders\MenuSeeder;
 
 class MenuTest extends TripalTestCase {
   /**
    * Checks to see if the menu is built properly upon installation.
-   *
-   * @dataProvider tripal_manage_menus_entityLinkDataProvider
    */
-  public function testMenuInstalled($organism_title, $menu_link_title) {
-    $this->assertEquals($organism_title, $menu_link_title);
+  public function testMenuInstalled() {
+
+    $bundle_ids = db_query('
+        SELECT cb.bundle_id 
+        FROM {chado_bundle} cb 
+        WHERE cb.data_table = :bundle',
+      [':bundle' => 'organism'])->fetchAll();
+
+    foreach($bundle_ids as $object) {
+      $entities = db_query('
+        SELECT te.title
+        FROM {tripal_entity} te
+        WHERE te.term_id IN (:bundle_id)
+        ORDER BY te.title ASC',
+        [':bundle_id' => $object->bundle_id])->fetchAll();
+    }
+
+    $entity_titles = [];
+    foreach($entities as $entity)
+      $entity_titles[] = $entity->title;
+
+    $mlid = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.link_title = :link_title',
+      [':menu_name' => 'main-menu', ':link_title' => 'Trees'])->fetchField();
+
+    $links = db_query('
+        SELECT ml.link_title
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.plid = :mlid
+        ORDER BY ml.link_title ASC',
+      [':menu_name' => 'main-menu', ':mlid' => $mlid])->fetchAll();
+
+    $link_titles = [];
+
+    foreach($links as $link)
+      $link_titles[] = $link->link_title;
+
+    $entity_link_data = [];
+
+    $i = 0;
+
+    foreach($entity_titles as $entity_title)
+    {
+      $entity_link_data[] = [
+        $entity_title,
+        $link_titles[$i],
+      ];
+
+      $i++;
+    }
+
+    $this->assertEquals($entity_titles, $link_titles);
   }
 
   /**
    * Checks to see if the menu is rebuilt properly after inserting an entity.
-   *
-   * @dataProvider tripal_manage_menus_entityLinkDataProvider
    */
-  public function testMenuInsert($organism_title, $menu_link_title) {
+  public function testMenuInsert() {
+    // Create a new organism
+    db_query('INSERT INTO chado.organism (genus, species) VALUES (:genus, :species)',
+      [':genus' => 'tmm', ':species' => 'menu__test']);
 
-    $this->assertEquals($organism_title, $menu_link_title);
+    $bundle_id = db_query('
+        SELECT cb.bundle_id 
+        FROM {chado_bundle} cb 
+        WHERE cb.data_table = :bundle',
+      [':bundle' => 'organism'])->fetchField();
+
+    // Create bundle name
+    $bundle_name = 'bio_data_' . $bundle_id;
+
+    // Publish records for the bundle
+    $value = array(
+      'bundle_name' => $bundle_name
+    );
+    tripal_chado_publish_records($value);
+
+    // Get the entity id of the newly created organism
+    $organism_id = db_query('SELECT organism_id 
+        FROM {chado.organism} o 
+        WHERE o.genus = :genus
+        AND o.species = :species',
+      [':genus' => 'tmm', ':species' => 'menu__test'])->fetchField();
+
+    // Get the entity and save it for later tests
+    $entity_id = chado_get_record_entity_by_table('organism', $organism_id);
+
+    $bundle_ids = db_query('
+        SELECT cb.bundle_id 
+        FROM {chado_bundle} cb 
+        WHERE cb.data_table = :bundle',
+      [':bundle' => 'organism'])->fetchAll();
+
+    foreach($bundle_ids as $object) {
+      $entities = db_query('
+        SELECT te.title
+        FROM {tripal_entity} te
+        WHERE te.term_id IN (:bundle_id)
+        ORDER BY te.title ASC',
+        [':bundle_id' => $object->bundle_id])->fetchAll();
+    }
+
+    $entity_titles = [];
+    foreach($entities as $entity)
+      $entity_titles[] = $entity->title;
+
+    $mlid = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.link_title = :link_title',
+      [':menu_name' => 'main-menu', ':link_title' => 'Trees'])->fetchField();
+
+    $links = db_query('
+        SELECT ml.link_title
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.plid = :mlid
+        ORDER BY ml.link_title ASC',
+      [':menu_name' => 'main-menu', ':mlid' => $mlid])->fetchAll();
+
+    $link_titles = [];
+
+    foreach($links as $link)
+      $link_titles[] = $link->link_title;
+
+    $entity_link_data = [];
+
+    $i = 0;
+
+    foreach($entity_titles as $entity_title)
+    {
+      $entity_link_data[] = [
+        $entity_title,
+        $link_titles[$i],
+      ];
+
+      $i++;
+    }
+
+    $this->assertEquals($entity_titles, $link_titles);
+
+    return $entity_id;
   }
 
   /**
    * Checks to see if the menu is rebuilt properly after updating an entity.
    *
-   * @dataProvider tripal_manage_menus_entityLinkDataProvider
+   * @depends testMenuInsert
    */
-  public function testMenuUpdate() {
+  public function testMenuUpdate($entity_id) {
+    // Change the name of the created organism
+    db_query('UPDATE {chado.organism} o SET genus = :new_genus WHERE o.genus = :old_genus',
+      [':new_genus' => 'tmm_u', ':old_genus' => 'tmm']);
 
+    // Save the update
+    entity_save('TripalEntity', intval($entity_id));
+
+    $bundle_ids = db_query('
+        SELECT cb.bundle_id 
+        FROM {chado_bundle} cb 
+        WHERE cb.data_table = :bundle',
+      [':bundle' => 'organism'])->fetchAll();
+
+    foreach($bundle_ids as $object) {
+      $entities = db_query('
+        SELECT te.title
+        FROM {tripal_entity} te
+        WHERE te.term_id IN (:bundle_id)
+        ORDER BY te.title ASC',
+        [':bundle_id' => $object->bundle_id])->fetchAll();
+    }
+
+    $entity_titles = [];
+    foreach($entities as $entity)
+      $entity_titles[] = $entity->title;
+
+    $mlid = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.link_title = :link_title',
+      [':menu_name' => 'main-menu', ':link_title' => 'Trees'])->fetchField();
+
+    $links = db_query('
+        SELECT ml.link_title
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.plid = :mlid
+        ORDER BY ml.link_title ASC',
+      [':menu_name' => 'main-menu', ':mlid' => $mlid])->fetchAll();
+
+    $link_titles = [];
+
+    foreach($links as $link)
+      $link_titles[] = $link->link_title;
+
+    $entity_link_data = [];
+
+    $i = 0;
+
+    foreach($entity_titles as $entity_title)
+    {
+      $entity_link_data[] = [
+        $entity_title,
+        $link_titles[$i],
+      ];
+
+      $i++;
+    }
+
+    $this->assertEquals($entity_titles, $link_titles);
   }
 
   /**
    * Checks to see if the menu is rebuilt properly after deleting an entity.
    *
-   * @dataProvider entityLinkDataProvider
+   * @depends testMenuInsert
    */
-  public function testMenuDelete() {
+  public function testMenuDelete($entity_id) {
 
+    $success = entity_delete('TripalEntity', intval($entity_id));
+    if ($success == FALSE) var_dump($entity_id);
+
+    $bundle_ids = db_query('
+        SELECT cb.bundle_id 
+        FROM {chado_bundle} cb 
+        WHERE cb.data_table = :bundle',
+      [':bundle' => 'organism'])->fetchAll();
+
+    foreach($bundle_ids as $object) {
+      $entities = db_query('
+        SELECT te.title
+        FROM {tripal_entity} te
+        WHERE te.term_id IN (:bundle_id)
+        ORDER BY te.title ASC',
+        [':bundle_id' => $object->bundle_id])->fetchAll();
+    }
+
+    $entity_titles = [];
+    foreach($entities as $entity)
+      $entity_titles[] = $entity->title;
+
+    $mlid = db_query('
+        SELECT ml.mlid
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.link_title = :link_title',
+      [':menu_name' => 'main-menu', ':link_title' => 'Trees'])->fetchField();
+
+    $links = db_query('
+        SELECT ml.link_title
+        FROM {menu_links} ml
+        WHERE ml.menu_name = :menu_name
+        AND   ml.plid = :mlid
+        ORDER BY ml.link_title ASC',
+      [':menu_name' => 'main-menu', ':mlid' => $mlid])->fetchAll();
+
+    $link_titles = [];
+
+    foreach($links as $link)
+      $link_titles[] = $link->link_title;
+
+    $entity_link_data = [];
+
+    $i = 0;
+
+    foreach($entity_titles as $entity_title)
+    {
+      $entity_link_data[] = [
+        $entity_title,
+        $link_titles[$i],
+      ];
+
+      $i++;
+    }
+
+    $this->assertEquals($entity_titles, $link_titles);
   }
 
   /**
