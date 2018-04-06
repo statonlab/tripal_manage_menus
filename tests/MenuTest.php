@@ -93,11 +93,14 @@ class MenuTest extends TripalTestCase {
     $organism_id = db_query('SELECT organism_id 
         FROM {chado.organism} o 
         WHERE o.genus = :genus
-        AND o.species = :species',
+        AND o.species = :species
+        ORDER BY o.organism_id DESC',
       [':genus' => 'tmm', ':species' => 'menu__test'])->fetchField();
 
     // Get the entity and save it for later tests
     $entity_id = chado_get_record_entity_by_table('organism', $organism_id);
+
+    var_dump($entity_id);
 
     $bundle_ids = db_query('
         SELECT cb.bundle_id 
@@ -163,12 +166,15 @@ class MenuTest extends TripalTestCase {
    * @depends testMenuInsert
    */
   public function testMenuUpdate($entity_id) {
-    // Change the name of the created organism
-    db_query('UPDATE {chado.organism} o SET genus = :new_genus WHERE o.genus = :old_genus',
-      [':new_genus' => 'tmm_u', ':old_genus' => 'tmm']);
 
-    // Save the update
-    entity_save('TripalEntity', intval($entity_id));
+    $entity = entity_load_single('TripalEntity', $entity_id);
+
+    $ec = entity_get_controller('TripalEntity');
+    $ec->setTitle($entity, 'something new');
+
+    var_dump($entity);
+
+    entity_save('TripalEntity', $entity);
 
     $bundle_ids = db_query('
         SELECT cb.bundle_id 
@@ -233,8 +239,7 @@ class MenuTest extends TripalTestCase {
    */
   public function testMenuDelete($entity_id) {
 
-    $success = entity_delete('TripalEntity', intval($entity_id));
-    if ($success == FALSE) var_dump($entity_id);
+    // entity_delete('TripalEntity', intval($entity_id));
 
     $bundle_ids = db_query('
         SELECT cb.bundle_id 
