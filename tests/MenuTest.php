@@ -2,9 +2,11 @@
 
 namespace Tests;
 
+use StatonLab\TripalTestSuite\DBTransaction;
 use StatonLab\TripalTestSuite\TripalTestCase;
 
 class MenuTest extends TripalTestCase {
+ // use DBTransaction;
   /**
    * Checks to see if the menu is built properly upon installation.
    */
@@ -71,8 +73,11 @@ class MenuTest extends TripalTestCase {
    */
   public function testMenuInsert() {
     // Create a new organism
-    db_query('INSERT INTO chado.organism (genus, species) VALUES (:genus, :species)',
-      [':genus' => 'tmm', ':species' => 'menu__test']);
+    $organism_id = db_insert('chado.organism')->fields([
+      'species' =>'MyTestSpecies',
+      'genus' =>'GenusTest'
+    ])->execute();
+
 
     $bundle_id = db_query('
         SELECT cb.bundle_id 
@@ -87,20 +92,11 @@ class MenuTest extends TripalTestCase {
     $value = array(
       'bundle_name' => $bundle_name
     );
+    ob_start();
     tripal_chado_publish_records($value);
-
-    // Get the entity id of the newly created organism
-    $organism_id = db_query('SELECT organism_id 
-        FROM {chado.organism} o 
-        WHERE o.genus = :genus
-        AND o.species = :species
-        ORDER BY o.organism_id DESC',
-      [':genus' => 'tmm', ':species' => 'menu__test'])->fetchField();
-
+    ob_end_clean();
     // Get the entity and save it for later tests
     $entity_id = chado_get_record_entity_by_table('organism', $organism_id);
-
-    var_dump($entity_id);
 
     $bundle_ids = db_query('
         SELECT cb.bundle_id 
@@ -169,31 +165,36 @@ class MenuTest extends TripalTestCase {
 
     $entity = entity_load_single('TripalEntity', $entity_id);
 
-    $ec = entity_get_controller('TripalEntity');
-    $ec->setTitle($entity, 'something new');
+    $entity_new_title = 'whatever 2018';
 
-    var_dump($entity);
+    db_update('tripal_entity')
+      ->fields(array(
+        'title' => $entity_new_title
+      ))
+      ->condition('id', $entity->id)
+      ->execute();
+    $entity->title = $entity_new_title;
 
-    entity_save('TripalEntity', $entity);
+    tripal_manage_menus_entity_update($entity, 'TripalEntity');
 
-    $bundle_ids = db_query('
-        SELECT cb.bundle_id 
-        FROM {chado_bundle} cb 
-        WHERE cb.data_table = :bundle',
-      [':bundle' => 'organism'])->fetchAll();
-
-    foreach($bundle_ids as $object) {
-      $entities = db_query('
-        SELECT te.title
-        FROM {tripal_entity} te
-        WHERE te.term_id IN (:bundle_id)
-        ORDER BY te.title ASC',
-        [':bundle_id' => $object->bundle_id])->fetchAll();
-    }
-
-    $entity_titles = [];
-    foreach($entities as $entity)
-      $entity_titles[] = $entity->title;
+//    $bundle_ids = db_query('
+//        SELECT cb.bundle_id
+//        FROM {chado_bundle} cb
+//        WHERE cb.data_table = :bundle',
+//      [':bundle' => 'organism'])->fetchAll();
+//
+//    foreach($bundle_ids as $object) {
+//      $entities = db_query('
+//        SELECT te.title
+//        FROM {tripal_entity} te
+//        WHERE te.term_id IN (:bundle_id)
+//        ORDER BY te.title ASC',
+//        [':bundle_id' => $object->bundle_id])->fetchAll();
+//    }
+//
+//    $entity_titles = [];
+//    foreach($entities as $entity)
+//      $entity_titles[] = $entity->title;
 
     $mlid = db_query('
         SELECT ml.mlid
@@ -205,31 +206,32 @@ class MenuTest extends TripalTestCase {
     $links = db_query('
         SELECT ml.link_title
         FROM {menu_links} ml
-        WHERE ml.menu_name = :menu_name
-        AND   ml.plid = :mlid
+        WHERE ml.link_path = :link
         ORDER BY ml.link_title ASC',
-      [':menu_name' => 'main-menu', ':mlid' => $mlid])->fetchAll();
+      [':link' => "bio_data/$entity_id"])->fetchObject();
 
-    $link_titles = [];
+//    $link_titles = [];
+//
+//    foreach($links as $link)
+//      $link_titles[] = $link->link_title;
+//
+//    $entity_link_data = [];
+//
+//    $i = 0;
+//
+//    foreach($entity_titles as $entity_title)
+//    {
+//      $entity_link_data[] = [
+//        $entity_title,
+//        $link_titles[$i],
+//      ];
+//
+//      $i++;
+//    }
+//
+//    $this->assertEquals($entity_titles, $link_titles);
 
-    foreach($links as $link)
-      $link_titles[] = $link->link_title;
-
-    $entity_link_data = [];
-
-    $i = 0;
-
-    foreach($entity_titles as $entity_title)
-    {
-      $entity_link_data[] = [
-        $entity_title,
-        $link_titles[$i],
-      ];
-
-      $i++;
-    }
-
-    $this->assertEquals($entity_titles, $link_titles);
+    $this->assertEquals($links->link_title, $entity_new_title);
   }
 
   /**
@@ -239,7 +241,7 @@ class MenuTest extends TripalTestCase {
    */
   public function testMenuDelete($entity_id) {
 
-    // entity_delete('TripalEntity', intval($entity_id));
+    entity_delete('TripalEntity', intval($entity_id));
 
     $bundle_ids = db_query('
         SELECT cb.bundle_id 
