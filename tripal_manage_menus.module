@@ -6,8 +6,12 @@ require_once 'tripal_manage_menus.install';
  * Implements hook_entity_delete().
  */
 function tripal_manage_menus_entity_delete($entity, $type) {
-  if (in_array($entity->term_id, tripal_manage_menus_get_entity_bundle('organism')))
+  if (in_array($entity->term_id, tripal_manage_menus_get_entity_bundle('organism'))) {
     tripal_manage_menus_rebuild_menu_links('main-menu', 'Trees', 'organism');
+    // Hook fires before entity is deleted so manually take out the deleted entity from the links
+    db_query('DELETE FROM {menu_links} ml WHERE link_title = :title',
+      [':title' => $entity->title]);
+  }
 }
 
 /**
