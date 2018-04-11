@@ -78,7 +78,6 @@ class MenuTest extends TripalTestCase {
       'genus' =>'GenusTest'
     ])->execute();
 
-
     $bundle_id = db_query('
         SELECT cb.bundle_id 
         FROM {chado_bundle} cb 
@@ -177,25 +176,6 @@ class MenuTest extends TripalTestCase {
 
     tripal_manage_menus_entity_update($entity, 'TripalEntity');
 
-//    $bundle_ids = db_query('
-//        SELECT cb.bundle_id
-//        FROM {chado_bundle} cb
-//        WHERE cb.data_table = :bundle',
-//      [':bundle' => 'organism'])->fetchAll();
-//
-//    foreach($bundle_ids as $object) {
-//      $entities = db_query('
-//        SELECT te.title
-//        FROM {tripal_entity} te
-//        WHERE te.term_id IN (:bundle_id)
-//        ORDER BY te.title ASC',
-//        [':bundle_id' => $object->bundle_id])->fetchAll();
-//    }
-//
-//    $entity_titles = [];
-//    foreach($entities as $entity)
-//      $entity_titles[] = $entity->title;
-
     $mlid = db_query('
         SELECT ml.mlid
         FROM {menu_links} ml
@@ -210,27 +190,6 @@ class MenuTest extends TripalTestCase {
         ORDER BY ml.link_title ASC',
       [':link' => "bio_data/$entity_id"])->fetchObject();
 
-//    $link_titles = [];
-//
-//    foreach($links as $link)
-//      $link_titles[] = $link->link_title;
-//
-//    $entity_link_data = [];
-//
-//    $i = 0;
-//
-//    foreach($entity_titles as $entity_title)
-//    {
-//      $entity_link_data[] = [
-//        $entity_title,
-//        $link_titles[$i],
-//      ];
-//
-//      $i++;
-//    }
-//
-//    $this->assertEquals($entity_titles, $link_titles);
-
     $this->assertEquals($links->link_title, $entity_new_title);
   }
 
@@ -242,6 +201,11 @@ class MenuTest extends TripalTestCase {
   public function testMenuDelete($entity_id) {
 
     entity_delete('TripalEntity', intval($entity_id));
+
+    db_query('DELETE FROM chado.organism
+        WHERE genus = :genus
+        AND species = :species',
+      [':genus' => 'GenusTest', ':species' => 'MyTestSpecies']);
 
     $bundle_ids = db_query('
         SELECT cb.bundle_id 
