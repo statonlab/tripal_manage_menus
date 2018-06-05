@@ -6,6 +6,8 @@ Adds a menu that dynamically generates menu links to all existing organisms. Int
 # Setup
 When Tripal Manage Menus is installed, it automatically generates menu links to all organisms on the site and will automatically update and adjust menu links whenever organisms are created, updated, or deleted. The menu can be seen at `Structure > Menus > Main Menu`.
 
+![](documentation/img/tripal_manage_menus_doc1.png)
+
 # Customization
 Tripal Manage Menus is intended for use solely with the Hardwood Genomics site and will most likely not work on any other Tripal site, however, this can be altered either through editing the link path through SQL or by changing the install code.
 
@@ -20,6 +22,8 @@ WHERE link_path = '/organism';
 ```
 
 ### Editing Install Code
-The menu link is created in the `tripal_manage_menus.install` file during `hook_install()`. You can change the second parameter to a link that will work on your site.
+The menu link is created in the `tripal_manage_menus.install` file during `hook_install()`. You can change the second parameter of the `tripal_manage_menus_create_link()` function call to a link that will work on your site.
 
 You can also change the name of the menu, the menu under which this menu is created, and the bundle from which links to entities are created (first, third, and fourth parameters, respectively).
+
+![](documentation/img/tripal_manage_menus_doc2.png)
