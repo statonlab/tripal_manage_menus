@@ -18,7 +18,7 @@ The link path can be altered by running the following `drush sql-cli` and enteri
 ```
 UPDATE menu_links
 SET link_path = 'your_link_path'
-WHERE link_path = '/organism';
+WHERE link_path = '/organisms';
 ```
 
 ### Editing Install Code
