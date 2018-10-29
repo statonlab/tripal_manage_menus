@@ -199,6 +199,7 @@ function tripal_manage_menus_update_menu_links($entities, $menu_name, $mlid) {
   $i = 0;
 
   foreach ($entities as $entity) {
+
     $link = [
       'link_title' => $entity->title,
       // Something along the lines of '/bio_data/10'
