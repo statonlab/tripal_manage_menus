@@ -10,6 +10,7 @@ function tripal_manage_menus_entity_delete($entity, $type) {
   if (property_exists($entity, "term_id") && in_array($entity->term_id, tripal_manage_menus_get_entity_bundle('organism'))) {
     tripal_manage_menus_rebuild_menu_links('main-menu', 'Trees', 'organism');
 
+    // recreate link path with title
     $path = 'bio_data/' . $entity->id;
 
     // Hook fires before entity is deleted so manually take out the deleted entity from the links
